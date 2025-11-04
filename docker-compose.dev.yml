@@ -1,5 +1,4 @@
-services:
-  # PostgreSQL Database
+docker-compose -f docker-compose.dev.yml logs -f frontendservices:
   db:
     image: postgres:15
     environment:
@@ -37,6 +36,7 @@ services:
       SECRET_KEY: your-secret-key-change-in-production
       REDIS_URL: redis://redis:6379
       FRONTEND_URL: http://localhost:3000
+      APP_NAME: Masna
     ports:
       - "8000:8000"
     depends_on:
@@ -50,11 +50,14 @@ services:
 
   # Frontend (Development)
   frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
+    # In dev, do not build a Next.js image; run directly on Node
+    image: node:18-alpine
+    working_dir: /app
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000
+      # Ensure Next dev binds to all interfaces inside container
+      # (so host can reach port mapping)
+      HOSTNAME: 0.0.0.0
     ports:
       - "3000:3000"
     depends_on:
@@ -63,7 +66,20 @@ services:
       - .:/app
       - /app/node_modules
       - /app/.next
-    command: npm run dev
+    # Install dev deps (since image prunes them) and bind to 0.0.0.0
+    command: sh -c "npm install && npm run dev -- -H 0.0.0.0 -p 3000"
+
+  # pgAdmin (PostgreSQL GUI)
+  pgadmin:
+    image: dpage/pgadmin4:8.13
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin1234
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
 
 volumes:
   postgres_data:

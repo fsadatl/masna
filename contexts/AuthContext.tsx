@@ -70,11 +70,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const login = async (email: string, password: string) => {
     try {
-      const formData = new FormData();
-      formData.append('username', email);
-      formData.append('password', password);
+      const data = new URLSearchParams();
+      data.append('username', email);
+      data.append('password', password);
 
-      const response = await axios.post('/auth/login', formData, {
+      const response = await axios.post('/auth/login', data, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -85,10 +85,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       
       await fetchUser();
-      toast.success('ورود موفقیت‌آمیز!');
+      toast.success('ورود با موفقیت انجام شد');
       router.push('/dashboard');
     } catch (error: any) {
-      toast.error('خطا در ورود: ' + (error.response?.data?.detail || 'خطای نامشخص'));
+      toast.error('خطا در ورود: ' + (error.response?.data?.detail || 'خطای ناشناخته'));
       throw error;
     }
   };
@@ -96,10 +96,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const register = async (userData: any) => {
     try {
       await axios.post('/auth/register', userData);
-      toast.success('ثبت‌نام موفقیت‌آمیز! لطفاً وارد شوید.');
+      toast.success('ثبت‌نام با موفقیت انجام شد');
       router.push('/login');
     } catch (error: any) {
-      toast.error('خطا در ثبت‌نام: ' + (error.response?.data?.detail || 'خطای نامشخص'));
+      toast.error('خطا در ثبت‌نام: ' + (error.response?.data?.detail || 'خطای ناشناخته'));
       throw error;
     }
   };
@@ -109,7 +109,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     delete axios.defaults.headers.common['Authorization'];
     setUser(null);
     router.push('/');
-    toast.success('خروج موفقیت‌آمیز!');
+    toast.success('خروج با موفقیت انجام شد');
   };
 
   const value = {
@@ -122,3 +122,4 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
+

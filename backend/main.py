@@ -45,6 +45,8 @@ additional_origins = [
     "http://127.0.0.1:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3001",
+    # Helpful in dev if you open 0.0.0.0:3000
+    "http://0.0.0.0:3000",
 ]
 allow_origins = list({frontend_url, *additional_origins})
 
@@ -273,7 +275,33 @@ def create_project(
             status_code=403,
             detail="Only employers can create projects"
         )
-    
+
+    # If this project is derived from an idea, prevent duplicates
+    existing_project = None
+    if project.idea_id is not None:
+        existing_project = db.query(Project).filter(Project.idea_id == project.idea_id).first()
+        if existing_project:
+            # Normalize and return existing to keep operation idempotent
+            db.refresh(existing_project)
+            db.refresh(existing_project, ["employer", "executor", "idea"])
+            if existing_project.idea:
+                try:
+                    db.refresh(existing_project.idea, ["creator"])
+                except Exception:
+                    pass
+                if getattr(existing_project.idea, "tags", None):
+                    try:
+                        existing_project.idea.tags = json.loads(existing_project.idea.tags)
+                    except Exception:
+                        pass
+                if getattr(existing_project.idea, "creator", None):
+                    parse_user_skills(existing_project.idea.creator)
+            if existing_project.employer:
+                parse_user_skills(existing_project.employer)
+            if existing_project.executor:
+                parse_user_skills(existing_project.executor)
+            return existing_project
+
     db_project = Project(
         title=project.title,
         description=project.description,
@@ -287,10 +315,35 @@ def create_project(
     db.add(db_project)
     db.commit()
     db.refresh(db_project)
-    
-    # Load relationships
+
+    # If linked to an idea, update its status to in_project
+    if db_project.idea_id:
+        idea_obj = db.query(Idea).filter(Idea.id == db_project.idea_id).first()
+        if idea_obj and getattr(idea_obj, "status", None) != "in_project":
+            try:
+                idea_obj.status = "in_project"
+                db.commit()
+            except Exception:
+                db.rollback()
+
+    # Load relationships and normalize nested fields
     db.refresh(db_project, ["employer", "executor", "idea"])
-    
+    if db_project.idea:
+        try:
+            db.refresh(db_project.idea, ["creator"])
+        except Exception:
+            pass
+    if db_project.idea and getattr(db_project.idea, "tags", None):
+        try:
+            db_project.idea.tags = json.loads(db_project.idea.tags)
+        except Exception:
+            pass
+    if db_project.employer:
+        parse_user_skills(db_project.employer)
+    if db_project.executor:
+        parse_user_skills(db_project.executor)
+    if db_project.idea and getattr(db_project.idea, "creator", None):
+        parse_user_skills(db_project.idea.creator)
     return db_project
 
 @app.get("/projects", response_model=List[ProjectResponse])
@@ -315,9 +368,25 @@ def get_projects(
     
     projects = query.offset(skip).limit(limit).all()
     
-    # Load relationships
+    # Load relationships and normalize nested fields
     for project in projects:
         db.refresh(project, ["employer", "executor", "idea"])
+        if project.idea:
+            try:
+                db.refresh(project.idea, ["creator"])
+            except Exception:
+                pass
+        if project.idea and getattr(project.idea, "tags", None):
+            try:
+                project.idea.tags = json.loads(project.idea.tags)
+            except Exception:
+                pass
+        if project.employer:
+            parse_user_skills(project.employer)
+        if project.executor:
+            parse_user_skills(project.executor)
+        if project.idea and getattr(project.idea, "creator", None):
+            parse_user_skills(project.idea.creator)
     
     return projects
 
@@ -329,6 +398,22 @@ def get_project(project_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Project not found")
     
     db.refresh(project, ["employer", "executor", "idea"])
+    if project.idea:
+        try:
+            db.refresh(project.idea, ["creator"])
+        except Exception:
+            pass
+    if project.idea and getattr(project.idea, "tags", None):
+        try:
+            project.idea.tags = json.loads(project.idea.tags)
+        except Exception:
+            pass
+    if project.employer:
+        parse_user_skills(project.employer)
+    if project.executor:
+        parse_user_skills(project.executor)
+    if project.idea and getattr(project.idea, "creator", None):
+        parse_user_skills(project.idea.creator)
     return project
 
 # Proposal endpoints
@@ -404,6 +489,19 @@ def get_project_proposals(
 
 @app.put("/proposals/{proposal_id}", response_model=ProposalResponse)
 def update_proposal_status(
+@app.get("/proposals/me", response_model=List[ProposalResponse])
+def get_my_proposals(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get all proposals created by the current executor user."""
+    query = db.query(Proposal)
+    if current_user.role.value != "admin":
+        query = query.filter(Proposal.executor_id == current_user.id)
+    proposals = query.order_by(Proposal.created_at.desc()).all()
+    for p in proposals:
+        db.refresh(p, ["executor"])  # ensure executor relation is loaded
+    return proposals
     proposal_id: int,
     proposal_update: ProposalUpdate,
     current_user: User = Depends(get_current_active_user),

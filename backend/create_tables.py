@@ -6,7 +6,7 @@ from database import Base
 
 def create_tables():
     """Create all database tables."""
-    database_url = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/idea_project_db")
+    database_url = os.getenv("DATABASE_URL", "postgresql://postgres:password@db:5432/idea_project_db")
     engine = create_engine(database_url)
     
     try:

@@ -4,7 +4,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Configure axios defaults
 axios.defaults.baseURL = API_BASE_URL;
-axios.defaults.headers.common['Content-Type'] = 'application/json';
+// Do not force a global Content-Type; let each request set appropriately
+// (e.g., urlencoded for login, JSON for APIs)
 
 // Add request interceptor to include auth token
 axios.interceptors.request.use(

@@ -11,8 +11,8 @@ os.environ["ALGORITHM"] = "HS256"
 os.environ["ACCESS_TOKEN_EXPIRE_MINUTES"] = "60"
 os.environ["UPLOAD_DIR"] = "test_uploads"
 
-from backend import database  # noqa: E402
-from backend.main import app  # noqa: E402
+import database  # noqa: E402
+from main import app  # noqa: E402
 
 
 client = TestClient(app)
@@ -148,4 +148,3 @@ def test_project_and_proposal_flow_and_files_and_stats():
     assert r.status_code == 200
     stats_exec = r.json()
     assert stats_exec["proposals_count"] >= 1
-

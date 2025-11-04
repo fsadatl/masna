@@ -1,14 +1,18 @@
-import { Vazirmatn } from 'next/font/google';
-import { AuthProvider } from '@/contexts/AuthContext';
-import Navbar from '@/components/Navbar';
-import { Toaster } from 'react-hot-toast';
-import '../styles/globals.css';
+import { Vazirmatn } from "next/font/google";
+import { AuthProvider } from "@/contexts/AuthContext";
+import Navbar from "@/components/Navbar";
+import { Toaster } from "react-hot-toast";
+import "../styles/globals.css";
 
-const vazirmatn = Vazirmatn({ subsets: ['arabic'], weight: ['200','300','400','500','700','800','900'] });
+const vazirmatn = Vazirmatn({
+  subsets: ["arabic"],
+  weight: ["200", "300", "400", "500", "700", "800", "900"],
+});
 
 export const metadata = {
-  title: 'پلتفرم همکاری ایده تا پروژه',
-  description: 'پلتفرم همکاری سه‌جانبه بین ایده‌دهندگان، مجریان و کارفرمایان',
+  title: "مثنا | ایده تا پروژه",
+  description:
+    "پلتفرم مثنا برای تبدیل ایده‌ها به پروژه‌های اجرایی با همکاری ایده‌پردازان، مجریان و کارفرمایان.",
 };
 
 export default function RootLayout({
@@ -22,17 +26,15 @@ export default function RootLayout({
         <AuthProvider>
           <div className="min-h-screen bg-gray-50">
             <Navbar />
-            <main className="container mx-auto px-4 py-8">
-              {children}
-            </main>
+            <main className="container mx-auto px-4 py-8">{children}</main>
           </div>
           <Toaster
             position="top-center"
             toastOptions={{
               duration: 4000,
               style: {
-                background: '#363636',
-                color: '#fff',
+                background: "#363636",
+                color: "#fff",
               },
             }}
           />

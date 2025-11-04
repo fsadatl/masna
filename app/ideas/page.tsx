@@ -1,9 +1,10 @@
-'use client';
+﻿'use client';\nimport { fa } from '@/locales/fa';
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import axios from '@/lib/api';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 interface Idea {
   id: number;
@@ -23,6 +24,7 @@ interface Idea {
 
 export default function IdeasPage() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -32,8 +34,21 @@ export default function IdeasPage() {
   });
 
   useEffect(() => {
+    // If opened with ?my=true, show only current user's ideas
+    const my = searchParams?.get('my');
+    if (my === 'true' && user?.id) {
+      setFilters((prev) => ({ ...prev, creator_id: String(user.id) }));
+    }
+  }, [searchParams, user]);
+
+  useEffect(() => {
+    const my = searchParams?.get('my');
+    if (my === 'true' && user?.id && filters.creator_id !== String(user.id)) {
+      // Wait until creator_id filter is applied to avoid fetching all ideas briefly
+      return;
+    }
     fetchIdeas();
-  }, [filters]);
+  }, [filters, searchParams, user]);
 
   const fetchIdeas = async () => {
     try {
@@ -54,11 +69,11 @@ export default function IdeasPage() {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'under_review':
-        return 'در حال بررسی';
+        return 'Ø¯Ø± Ø­Ø§Ù„ Ø¨Ø±Ø±Ø³ÛŒ';
       case 'in_project':
-        return 'در پروژه';
+        return 'Ø¯Ø± Ù¾Ø±ÙˆÚ˜Ù‡';
       case 'rejected':
-        return 'رد شده';
+        return 'Ø±Ø¯ Ø´Ø¯Ù‡';
       default:
         return status;
     }
@@ -79,16 +94,16 @@ export default function IdeasPage() {
 
   const handleApplyToIdea = async (ideaId: number) => {
     if (!user || user.role !== 'executor') {
-      alert('فقط مجریان می‌توانند برای ایده‌ها درخواست ارسال کنند');
+      alert('ÙÙ‚Ø· Ù…Ø¬Ø±ÛŒØ§Ù† Ù…ÛŒâ€ŒØªÙˆØ§Ù†Ù†Ø¯ Ø¨Ø±Ø§ÛŒ Ø§ÛŒØ¯Ù‡â€ŒÙ‡Ø§ Ø¯Ø±Ø®ÙˆØ§Ø³Øª Ø§Ø±Ø³Ø§Ù„ Ú©Ù†Ù†Ø¯');
       return;
     }
 
     try {
       // This would create a proposal or interest in the idea
-      alert('درخواست شما ارسال شد!');
+      alert('Ø¯Ø±Ø®ÙˆØ§Ø³Øª Ø´Ù…Ø§ Ø§Ø±Ø³Ø§Ù„ Ø´Ø¯!');
     } catch (error) {
       console.error('Error applying to idea:', error);
-      alert('خطا در ارسال درخواست');
+      alert('Ø®Ø·Ø§ Ø¯Ø± Ø§Ø±Ø³Ø§Ù„ Ø¯Ø±Ø®ÙˆØ§Ø³Øª');
     }
   };
 
@@ -103,38 +118,38 @@ export default function IdeasPage() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">ایده‌ها</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Ø§ÛŒØ¯Ù‡â€ŒÙ‡Ø§</h1>
         {user?.role === 'idea_creator' && (
           <Link href="/ideas/create" className="btn-primary">
-            ایجاد ایده جدید
+            Ø§ÛŒØ¬Ø§Ø¯ Ø§ÛŒØ¯Ù‡ Ø¬Ø¯ÛŒØ¯
           </Link>
         )}
       </div>
 
       {/* Filters */}
       <div className="card mb-8">
-        <h2 className="text-lg font-semibold mb-4">فیلترها</h2>
+        <h2 className="text-lg font-semibold mb-4">ÙÛŒÙ„ØªØ±Ù‡Ø§</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="label">وضعیت</label>
+            <label className="label">ÙˆØ¶Ø¹ÛŒØª</label>
             <select
               className="input-field"
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
             >
-              <option value="">همه</option>
-              <option value="under_review">در حال بررسی</option>
-              <option value="in_project">در پروژه</option>
-              <option value="rejected">رد شده</option>
+              <option value="">Ù‡Ù…Ù‡</option>
+              <option value="under_review">Ø¯Ø± Ø­Ø§Ù„ Ø¨Ø±Ø±Ø³ÛŒ</option>
+              <option value="in_project">Ø¯Ø± Ù¾Ø±ÙˆÚ˜Ù‡</option>
+              <option value="rejected">Ø±Ø¯ Ø´Ø¯Ù‡</option>
             </select>
           </div>
           
           <div>
-            <label className="label">ایده‌دهنده</label>
+            <label className="label">Ø§ÛŒØ¯Ù‡â€ŒØ¯Ù‡Ù†Ø¯Ù‡</label>
             <input
               type="text"
               className="input-field"
-              placeholder="جستجو بر اساس نام..."
+              placeholder="Ø¬Ø³ØªØ¬Ùˆ Ø¨Ø± Ø§Ø³Ø§Ø³ Ù†Ø§Ù…..."
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
             />
@@ -145,7 +160,7 @@ export default function IdeasPage() {
               onClick={() => setFilters({ status: '', creator_id: '', search: '' })}
               className="btn-outline w-full"
             >
-              پاک کردن فیلترها
+              Ù¾Ø§Ú© Ú©Ø±Ø¯Ù† ÙÛŒÙ„ØªØ±Ù‡Ø§
             </button>
           </div>
         </div>
@@ -189,7 +204,7 @@ export default function IdeasPage() {
                   </span>
                 </div>
                 <span className="text-sm text-gray-600">
-                  {idea.creator?.full_name || 'نامشخص'}
+                  {idea.creator?.full_name || 'Ù†Ø§Ù…Ø´Ø®Øµ'}
                 </span>
               </div>
               
@@ -204,7 +219,7 @@ export default function IdeasPage() {
                   href={`/ideas/${idea.id}`}
                   className="btn-outline flex-1 text-center text-sm"
                 >
-                  مشاهده جزئیات
+                  Ù…Ø´Ø§Ù‡Ø¯Ù‡ Ø¬Ø²Ø¦ÛŒØ§Øª
                 </Link>
                 
                 {user?.role === 'executor' && idea.status === 'under_review' && (
@@ -212,7 +227,7 @@ export default function IdeasPage() {
                     onClick={() => handleApplyToIdea(idea.id)}
                     className="btn-primary text-sm"
                   >
-                    من توانایی اجرای این ایده را دارم
+                    Ù…Ù† ØªÙˆØ§Ù†Ø§ÛŒÛŒ Ø§Ø¬Ø±Ø§ÛŒ Ø§ÛŒÙ† Ø§ÛŒØ¯Ù‡ Ø±Ø§ Ø¯Ø§Ø±Ù…
                   </button>
                 )}
               </div>
@@ -223,18 +238,18 @@ export default function IdeasPage() {
 
       {ideas.length === 0 && (
         <div className="text-center py-12">
-          <div className="text-6xl mb-4">💡</div>
+          <div className="text-6xl mb-4">ðŸ’¡</div>
           <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            هیچ ایده‌ای یافت نشد
+            Ù‡ÛŒÚ† Ø§ÛŒØ¯Ù‡â€ŒØ§ÛŒ ÛŒØ§ÙØª Ù†Ø´Ø¯
           </h3>
           <p className="text-gray-600 mb-4">
             {filters.status || filters.search
-              ? 'با فیلترهای انتخابی هیچ ایده‌ای یافت نشد'
-              : 'هنوز هیچ ایده‌ای ثبت نشده است'}
+              ? 'Ø¨Ø§ ÙÛŒÙ„ØªØ±Ù‡Ø§ÛŒ Ø§Ù†ØªØ®Ø§Ø¨ÛŒ Ù‡ÛŒÚ† Ø§ÛŒØ¯Ù‡â€ŒØ§ÛŒ ÛŒØ§ÙØª Ù†Ø´Ø¯'
+              : 'Ù‡Ù†ÙˆØ² Ù‡ÛŒÚ† Ø§ÛŒØ¯Ù‡â€ŒØ§ÛŒ Ø«Ø¨Øª Ù†Ø´Ø¯Ù‡ Ø§Ø³Øª'}
           </p>
           {user?.role === 'idea_creator' && (
             <Link href="/ideas/create" className="btn-primary">
-              اولین ایده را ایجاد کنید
+              Ø§ÙˆÙ„ÛŒÙ† Ø§ÛŒØ¯Ù‡ Ø±Ø§ Ø§ÛŒØ¬Ø§Ø¯ Ú©Ù†ÛŒØ¯
             </Link>
           )}
         </div>
@@ -242,3 +257,4 @@ export default function IdeasPage() {
     </div>
   );
 }
+

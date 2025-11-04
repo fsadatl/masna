@@ -37,6 +37,7 @@ services:
       SECRET_KEY: your-secret-key-change-in-production
       REDIS_URL: redis://redis:6379
       FRONTEND_URL: http://localhost:3000
+      APP_NAME: Masna
     ports:
       - "8000:8000"
     depends_on:

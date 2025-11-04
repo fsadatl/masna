@@ -123,15 +123,7 @@ export default function ProjectDetailPage() {
     }
   };
 
-  const handleSubmitProposal = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!id) return;
-    setSubmittingProposal(true);
-    try {
-      const payload: any = {
-        project_id: id,
-        cover_letter: proposalForm.cover_letter || undefined,
-      };
+  const handleAfterProposal = async () => {\r\n    if (id && user && (user.role === 'admin' || user.id === project?.employer_id)) {\r\n      await fetchProposals(id);\r\n    }\r\n  };\r\n
       if (proposalForm.proposed_price) payload.proposed_price = Number(proposalForm.proposed_price);
       if (proposalForm.proposed_timeline) payload.proposed_timeline = proposalForm.proposed_timeline;
 
@@ -340,3 +332,4 @@ export default function ProjectDetailPage() {
     </div>
   );
 }
+

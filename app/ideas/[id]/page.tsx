@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import axios from '@/lib/api';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface IdeaResponse {
   id: number;
@@ -27,6 +28,7 @@ export default function IdeaDetailPage() {
   const router = useRouter();
   const [idea, setIdea] = useState<IdeaResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     const id = params?.id as string;
@@ -103,7 +105,26 @@ export default function IdeaDetailPage() {
           </div>
         </div>
       </div>
+
+      <div className="mt-6 flex flex-col sm:flex-row gap-3">
+        <Link href="/ideas" className="btn-outline sm:flex-1 text-center">بازگشت به ایده‌ها</Link>
+        {user && (user.role === 'employer' || user.role === 'admin') && (
+          <button
+            className="btn-primary sm:flex-1"
+            onClick={() => router.push(`/projects/create?idea_id=${idea.id}`)}
+          >
+            تبدیل این ایده به پروژه
+          </button>
+        )}
+        {!user && (
+          <button
+            className="btn-outline sm:flex-1"
+            onClick={() => router.push('/login')}
+          >
+            برای تبدیل به پروژه وارد شوید
+          </button>
+        )}
+      </div>
     </div>
   );
 }
-
